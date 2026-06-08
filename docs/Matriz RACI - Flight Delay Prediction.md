@@ -26,7 +26,7 @@
 | Actividad | Project Owner | Business Stakeholder | Data Scientist | Data Engineer | ML Engineer | QA / Reviewer | Instructor |
 |---|---|---|---|---|---|---|---|
 | Definir problema de negocio y objetivo | A | C | R | I | I | C | I |
-| Definir variable objetivo `IS_DELAYED` | A | C | R | C | I | C | I |
+| Definir variable objetivo `ARRIVAL_DELAY` | A | C | R | C | I | C | I |
 | Identificar fuentes de datos | A | C | R | R | I | I | I |
 | Cargar `flights.csv`, `airlines.csv`, `airports.csv` | I | I | C | R | I | C | I |
 | Revisar calidad de datos y nulos | I | C | R | R | I | C | I |
@@ -36,7 +36,7 @@
 | Separar train/test | I | I | R | C | I | C | I |
 | Entrenar modelos candidatos | I | I | R | I | C | C | I |
 | Comparar metricas y seleccionar modelo | A | C | R | I | C | C | I |
-| Definir threshold operativo | A | C | R | I | C | C | I |
+| Definir niveles de riesgo operativo por minutos estimados | A | C | R | I | C | C | I |
 | Guardar modelo y metadata con `joblib` | I | I | C | I | R | C | I |
 | Crear API de inferencia | I | I | C | I | R | C | I |
 | Probar endpoint `/health` | I | I | I | I | R | R | I |

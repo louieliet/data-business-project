@@ -2,7 +2,7 @@
 
 ## 1. Objetivo del Proyecto
 
-Construir y demostrar un modelo de Machine Learning para predecir si un vuelo tendra un retraso mayor a 15 minutos usando el dataset **2015 Flight Delays & Cancellations** de Kaggle. El proyecto debe incluir analisis exploratorio, seleccion de variables, entrenamiento del modelo, empaquetado, exposicion mediante una API publicada con ngrok y un libro de trabajo externo que consuma el modelo.
+Construir y demostrar un modelo de Machine Learning para estimar los minutos de retraso de llegada de un vuelo usando el dataset **2015 Flight Delays & Cancellations** de Kaggle. El proyecto debe incluir analisis exploratorio, seleccion de variables, entrenamiento del modelo, empaquetado, exposicion mediante una API publicada con ngrok y un libro de trabajo externo que consuma el modelo.
 
 ## 2. Alcance
 
@@ -10,10 +10,10 @@ Construir y demostrar un modelo de Machine Learning para predecir si un vuelo te
 
 - Analisis exploratorio de datos sobre retrasos, aerolineas, rutas, horarios, meses y causas de demora.
 - Limpieza de datos y construccion de variables predictivas.
-- Entrenamiento y comparacion de modelos de clasificacion.
+- Entrenamiento y comparacion de modelos de regresion no simple.
 - Seleccion de un modelo final no trivial, con mas de 5 variables predictoras.
 - Empaquetado del modelo entrenado para inferencia.
-- API de prediccion para recibir datos de un vuelo y devolver probabilidad de retraso.
+- API de prediccion para recibir datos de un vuelo y devolver minutos estimados de retraso.
 - Publicacion temporal de la API mediante ngrok.
 - Workbook externo que invoque la API usando HTTP.
 - Documentacion de plan de trabajo y matriz RACI.
@@ -50,8 +50,8 @@ Construir y demostrar un modelo de Machine Learning para predecir si un vuelo te
 
 - Definir el caso de uso: anticipar vuelos con alto riesgo de retraso.
 - Identificar usuarios: operaciones, servicio al cliente, planeacion de tripulaciones y data science.
-- Definir la etiqueta de negocio: vuelo retrasado si `ARRIVAL_DELAY > 15`.
-- Alinear metricas: precision, recall, F1, AUC-ROC y threshold operativo.
+- Definir la etiqueta de negocio: `ARRIVAL_DELAY`, minutos de retraso de llegada.
+- Alinear metricas: MAE, RMSE y R2.
 
 **Criterio de aceptacion:** El proyecto explica por que la prediccion genera valor operativo y cuales decisiones soporta.
 
@@ -74,9 +74,9 @@ Construir y demostrar un modelo de Machine Learning para predecir si un vuelo te
 
 **Actividades:**
 
-- Crear `IS_DELAYED` como variable objetivo.
+- Crear `ARRIVAL_DELAY` como variable objetivo numerica.
 - Crear variables temporales: `HOUR_OF_DAY`, `IS_PEAK_HOUR`, `IS_WEEKEND`, `IS_HIGH_SEASON`.
-- Crear variables historicas agregadas: `ROUTE_DELAY_RATE`, `AIRLINE_DELAY_RATE`.
+- Crear variables historicas agregadas: `ROUTE_AVG_DELAY`, `AIRLINE_AVG_DELAY`.
 - Codificar variables categoricas necesarias.
 - Documentar claramente features y etiqueta.
 
@@ -89,10 +89,10 @@ Construir y demostrar un modelo de Machine Learning para predecir si un vuelo te
 **Actividades:**
 
 - Separar datos en train/test con estratificacion.
-- Manejar desbalance de clases con `class_weight` y/o SMOTE.
-- Entrenar Logistic Regression como baseline, Random Forest y XGBoost.
-- Comparar precision, recall, F1, AUC-ROC y matriz de confusion.
-- Seleccionar modelo final y threshold operativo.
+- Evaluar errores con MAE, RMSE, R2 y analisis residual.
+- Entrenar Random Forest Regressor y XGBoost Regressor.
+- Comparar MAE, RMSE, R2, errores residuales y feature importance.
+- Seleccionar modelo final por menor error y mejor interpretabilidad operativa.
 
 **Criterio de aceptacion:** Existe un modelo ganador defendible y se explica por que fue seleccionado.
 
@@ -103,7 +103,7 @@ Construir y demostrar un modelo de Machine Learning para predecir si un vuelo te
 **Actividades:**
 
 - Guardar modelo final con `joblib`.
-- Guardar lista de features, threshold, nombre del target y version del modelo.
+- Guardar lista de features, nombre del target y version del modelo.
 - Asegurar que la API use exactamente las mismas features del entrenamiento.
 
 **Criterio de aceptacion:** El modelo puede cargarse desde disco sin volver a entrenar.
@@ -131,7 +131,7 @@ Construir y demostrar un modelo de Machine Learning para predecir si un vuelo te
 - Crear un notebook separado del entrenamiento.
 - Definir `NGROK_URL`.
 - Enviar un payload de ejemplo con `requests.post`.
-- Mostrar probabilidad, clase predicha, threshold y nivel de riesgo.
+- Mostrar minutos estimados de retraso y nivel de riesgo operativo.
 
 **Criterio de aceptacion:** El workbook externo consume la API sin acceder directamente al modelo local.
 

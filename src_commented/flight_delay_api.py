@@ -8,6 +8,9 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+# Este bloque permite que el archivo funcione tanto cuando se importa como paquete
+# desde la raiz del proyecto (`src.flight_delay_features`) como cuando se ejecuta
+# desde dentro de la carpeta `src`.
 try:
     from src.flight_delay_features import (
         MODEL_ARTIFACT_PATH,
@@ -23,6 +26,8 @@ except ModuleNotFoundError:
 
 
 class PredictionRequest(BaseModel):
+    # Este modelo define la estructura esperada del request.
+    # La API recibe un diccionario llamado features con las variables del vuelo.
     features: dict[str, float] = Field(
         ...,
         description="Dictionary with all model features required for inference.",
@@ -48,24 +53,32 @@ class PredictionRequest(BaseModel):
 
 
 class PredictionResponse(BaseModel):
+    # Esta es la respuesta que regresa /predict.
+    # La salida principal es predicted_arrival_delay_minutes, no una clase.
     model_name: str
     predicted_arrival_delay_minutes: float
     risk_level: str
     features_used: list[str]
 
 
+# Creamos la instancia principal de FastAPI.
+# Esta app es la que uvicorn levanta en Colab y luego ngrok expone publicamente.
 app = FastAPI(
     title="Flight Delay Prediction API",
     description="API para estimar minutos de retraso de llegada de un vuelo.",
     version="1.0.0",
 )
 
+# Cache global del modelo.
+# Sirve para cargar el .joblib una sola vez y reutilizarlo en predicciones posteriores.
 _model_bundle: dict[str, Any] | None = None
 
 
 def load_model_bundle() -> dict[str, Any]:
     global _model_bundle
 
+    # Si el modelo ya fue cargado, lo regresamos desde memoria.
+    # Esto evita leer Google Drive en cada request.
     if _model_bundle is not None:
         return _model_bundle
 
@@ -76,6 +89,8 @@ def load_model_bundle() -> dict[str, Any]:
             "Run the packaging cell in the training notebook first."
         )
 
+    # joblib carga el bundle generado por el notebook de entrenamiento.
+    # Ese bundle contiene el modelo y metadata como features y target.
     loaded_bundle = joblib.load(artifact_path)
     if not isinstance(loaded_bundle, dict) or "model" not in loaded_bundle:
         raise ValueError("Invalid model artifact. Expected a dictionary with a 'model' key.")
@@ -85,6 +100,8 @@ def load_model_bundle() -> dict[str, Any]:
 
 
 def classify_risk(predicted_minutes: float) -> str:
+    # Esta funcion traduce minutos estimados a una categoria operativa.
+    # El modelo sigue siendo regresion; esta capa solo ayuda a negocio.
     if predicted_minutes >= 45:
         return "high"
     if predicted_minutes > 15:
@@ -94,6 +111,8 @@ def classify_risk(predicted_minutes: float) -> str:
 
 @app.get("/health")
 def health() -> dict[str, Any]:
+    # Endpoint para revisar si la API puede cargar el modelo.
+    # Si algo falla, responde degraded con el detalle del error.
     try:
         bundle = load_model_bundle()
         model_loaded = True
@@ -118,6 +137,7 @@ def health() -> dict[str, Any]:
 
 @app.post("/predict", response_model=PredictionResponse)
 def predict(request: PredictionRequest) -> PredictionResponse:
+    # Cargamos el modelo y validamos que el payload tenga todas las features.
     try:
         bundle = load_model_bundle()
         features = bundle.get("features", MODEL_FEATURES)
@@ -128,7 +148,11 @@ def predict(request: PredictionRequest) -> PredictionResponse:
     model = bundle["model"]
     model_name = str(bundle.get("model_name", model.__class__.__name__))
 
+    # Convertimos el payload a DataFrame para mantener la misma estructura
+    # que el modelo uso durante entrenamiento.
     input_df = pd.DataFrame([[ordered_payload[feature] for feature in features]], columns=features)
+
+    # Como el modelo es regresor, usamos predict() para obtener minutos estimados.
     predicted_minutes = float(model.predict(input_df)[0])
 
     return PredictionResponse(

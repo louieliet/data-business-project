@@ -54,11 +54,11 @@ Engineer Features
 
 7 engineered features: cascading_delay_flag · hour_of_day · is_peak_hour ·
 
-route_delay_rate · airline_delay_rate · is_high_season · is_weekend
+route_avg_delay · airline_avg_delay · is_high_season · is_weekend
 
 Train Models
 
-Logistics Regression/XGBoost/Random Forest — classify delay Yes/No, regress delay
+Random Forest Regressor/XGBoost Regressor — estimate arrival delay
 
 minutes
 
@@ -114,7 +114,7 @@ retraining
 
 ```
 
-If delay probability ≥ 85%: auto-push rebooking offer to passengers before they
+If predicted delay minutes ≥ 45: auto-push rebooking offer to passengers before they
 
 leave home.
 
@@ -268,9 +268,9 @@ Delay Rate >15min
 
 ```
 
-IS_DELAYED
+ARRIVAL_DELAY
 
-Target: ARRIVAL_DELAY > 15 min (binary classification)
+Target: arrival delay minutes (regression)
 
 ```
 
@@ -300,17 +300,17 @@ Flag: hour between 15–20 (3–8 PM risk zone)
 
 ```
 
-route_delay_rate
+route_avg_delay
 
-Historical delay % per origin→destination pair
-
-```
+Historical average arrival delay per origin→destination pair
 
 ```
 
-airline_delay_rate
+```
 
-Historical delay % per airline
+airline_avg_delay
+
+Historical average arrival delay per airline
 
 ```
 
@@ -326,21 +326,21 @@ Months [6,7,8,12,1] — summer + December peak
 
 ```
 
-Per-Flight Delay Probability
+Per-Flight Delay Minutes
 
-Probability score 0–100% + predicted delay minutes per flight with
+Predicted delay minutes per flight with
 
 2h anticipation
 
 Route Risk Heatmap
 
-Interactive map: color-coded delay probability by
+Interactive map: color-coded predicted delay minutes by
 
 origin→destination pair
 
 Peak Hour Analysis
 
-Hourly delay rate chart — 3–8 PM identified as highest risk window
+Hourly average delay chart — 3–8 PM identified as highest risk window
 
 ```
 
@@ -348,7 +348,7 @@ Hourly delay rate chart — 3–8 PM identified as highest risk window
 
 Airline Performance Ranking
 
-Southwest & United top delay rates (>21%) vs. Alaska Airlines (14%)
+Airlines ranked by average arrival delay minutes
 
 ```
 
@@ -356,35 +356,35 @@ Southwest & United top delay rates (>21%) vs. Alaska Airlines (14%)
 
 Feature Importance
 
-cascading_delay_flag · hour_of_day · route_delay_rate
+cascading_delay_flag · hour_of_day · route_avg_delay
 
 ```
 
 ```
 
-Threshold Optimization
+Operational Risk Bands
 
-85% threshold: catches 83% of real delays, keeps false alerts below
+Low: ≤15 min · Medium: >15 and <45 min · High: ≥45 min
 
-15%
+Risk bands translate regression output into business action.
 
 ```
 
 ##### Models
 
-#### Logistics
+#### Random Forest Regressor
 
-#### Regression
+#### XGBoost Regressor
 
-#### Random Forest
+#### Error Analysis
 
-#### XGBoost
+#### Feature Importance
 
-##### Threshold Analysis
+##### Regression Evaluation
 
 ```
 
-F1 - Precision - Recall - AUC^
+MAE - RMSE - R2 - Residual Error^
 
 ```
 
@@ -536,9 +536,9 @@ Triggered Actions by Delay Signal
 
 Proactive Passenger Comms
 
-SMS / app push with lounge voucher or free rebook when delay probability
+SMS / app push with lounge voucher or free rebook when predicted delay minutes
 
-crosses threshold
+cross an operational risk band
 
 ```
 
@@ -608,17 +608,17 @@ Slack / Teams push when weather threatens >30% of outbound flights
 
 Targets
 
-Catch real delays early
+Estimate delay magnitude early
 
-→ At least 8 out of 10 delayed flights flagged before departure. Target: Recall ≥ 80%
-
-```
+→ High-delay flights should receive actionable predicted delay minutes before operational decisions.
 
 ```
 
-Alerts must be trustworthy
+```
 
-→ 85 out of 100 alerts correspond to an actual delay. Target: Precision ≥ 85%
+Predictions must be trustworthy
+
+→ Error should stay low enough for operational trust. Target: low MAE/RMSE on holdout data.
 
 ```
 
